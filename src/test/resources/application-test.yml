@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: worksphere-job-portal-restful-api-test
+  datasource:
+    url: jdbc:h2:mem:worksphere_test_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  h2:
+    console:
+      enabled: false
+
+app:
+  jwt:
+    secret-key: "test-secret-key-with-at-least-32-characters"
+    access-token-expiration: 900000
+    refresh-token-expiration: 604800000
