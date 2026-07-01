@@ -50,10 +50,11 @@ public class AdminController {
     //Lấy danh sách người dùng theo bộ lọc tùy chọn.
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<List<UserResponse>>> getUsers(
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Role role,
             @RequestParam(required = false) Boolean isActive
     ) {
-        List<UserResponse> users = adminService.getUsers(role, isActive);
+        List<UserResponse> users = adminService.getUsers(role, isActive, keyword);
         return ResponseEntity.ok(ApiResponse.success("Get users successfully", users));
     }
 
@@ -105,9 +106,10 @@ public class AdminController {
     //Lấy danh sách tin tuyển dụng theo trạng thái tùy chọn.
     @GetMapping("/jobs")
     public ResponseEntity<ApiResponse<List<JobPostingResponse>>> getJobs(
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) JobStatus status
     ) {
-        List<JobPostingResponse> jobs = adminService.getJobs(status);
+        List<JobPostingResponse> jobs = adminService.getJobs(status, keyword);
         return ResponseEntity.ok(ApiResponse.success("Get job postings successfully", jobs));
     }
 

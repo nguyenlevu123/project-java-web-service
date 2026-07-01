@@ -79,21 +79,17 @@ public class AdminService {
     //Lấy danh sách người dùng theo bộ lọc vai trò hoặc trạng thái.
     @Transactional(readOnly = true)
     public List<UserResponse> getUsers(Role role, Boolean isActive) {
-        List<User> users;
+        return getUsers(role, isActive, null);
+    }
 
-        if (role != null && isActive != null) {
-            users = userRepository.findByRoleAndIsActive(role, isActive);
-        } else if (role != null) {
-            users = userRepository.findByRole(role);
-        } else if (isActive != null) {
-            users = userRepository.findByIsActive(isActive);
-        } else {
-            users = userRepository.findAll();
-        }
+    //Lấy danh sách người dùng theo bộ lọc và từ khóa tìm kiếm.
+    @Transactional(readOnly = true)
+    public List<UserResponse> getUsers(Role role, Boolean isActive, String keyword) {
+        List<User> users = hasKeyword(keyword)
+                ? userRepository.searchByKeywordAndFilters(keyword.trim(), role, isActive)
+                : findUsersByFilters(role, isActive);
 
-        return users.stream()
-                .map(userMapper::toResponse)
-                .toList();
+        return mapUsers(users);
     }
 
     //Lấy chi tiết người dùng theo id.
@@ -174,17 +170,17 @@ public class AdminService {
     //Lấy danh sách tin tuyển dụng theo trạng thái nếu có.
     @Transactional(readOnly = true)
     public List<JobPostingResponse> getJobs(JobStatus status) {
-        List<JobPosting> jobPostings;
+        return getJobs(status, null);
+    }
 
-        if (status != null) {
-            jobPostings = jobPostingRepository.findByStatus(status);
-        } else {
-            jobPostings = jobPostingRepository.findAll();
-        }
+    //Lấy danh sách tin tuyển dụng theo trạng thái và từ khóa tìm kiếm.
+    @Transactional(readOnly = true)
+    public List<JobPostingResponse> getJobs(JobStatus status, String keyword) {
+        List<JobPosting> jobPostings = hasKeyword(keyword)
+                ? jobPostingRepository.searchByKeywordAndStatus(keyword.trim(), status)
+                : findJobPostingsByStatus(status);
 
-        return jobPostings.stream()
-                .map(jobPostingMapper::toResponse)
-                .toList();
+        return mapJobPostings(jobPostings);
     }
 
     //Lấy chi tiết tin tuyển dụng theo id.
@@ -256,6 +252,30 @@ public class AdminService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
+    //Lấy người dùng theo bộ lọc cũ khi không tìm kiếm.
+    private List<User> findUsersByFilters(Role role, Boolean isActive) {
+        if (role != null && isActive != null) {
+            return userRepository.findByRoleAndIsActive(role, isActive);
+        }
+
+        if (role != null) {
+            return userRepository.findByRole(role);
+        }
+
+        if (isActive != null) {
+            return userRepository.findByIsActive(isActive);
+        }
+
+        return userRepository.findAll();
+    }
+
+    //Chuyển danh sách User sang DTO an toàn cho API.
+    private List<UserResponse> mapUsers(List<User> users) {
+        return users.stream()
+                .map(userMapper::toResponse)
+                .toList();
+    }
+
     //Tìm nhà tuyển dụng còn hoạt động hoặc báo lỗi phù hợp.
     private User findActiveEmployerById(Long id) {
         User employer = findUserById(id);
@@ -290,5 +310,26 @@ public class AdminService {
     private JobPosting findJobPostingById(Long id) {
         return jobPostingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Job posting not found"));
+    }
+
+    //Lấy tin tuyển dụng theo trạng thái cũ khi không tìm kiếm.
+    private List<JobPosting> findJobPostingsByStatus(JobStatus status) {
+        if (status != null) {
+            return jobPostingRepository.findByStatus(status);
+        }
+
+        return jobPostingRepository.findAll();
+    }
+
+    //Chuyển danh sách JobPosting sang DTO trả về API.
+    private List<JobPostingResponse> mapJobPostings(List<JobPosting> jobPostings) {
+        return jobPostings.stream()
+                .map(jobPostingMapper::toResponse)
+                .toList();
+    }
+
+    //Kiểm tra từ khóa tìm kiếm có giá trị hay không.
+    private boolean hasKeyword(String keyword) {
+        return keyword != null && !keyword.isBlank();
     }
 }
